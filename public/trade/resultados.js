@@ -16,32 +16,70 @@
 
   let items = [];
   let lastSync = null;
-  const charts = { nps: null, sat: null, prod: null };
+  const charts = { nps: null, sat: null, prod: null, redes: null, carrierOtro: null };
 
   const LABELS = {
+    fechaEncuesta: "Fecha encuesta",
     claveYaavser: "Clave YAAVSER",
-    satisfaccionGeneral: "Satisfacción general",
-    nps: "Recomendación (1–5)",
-    npsPorque: "¿Por qué?",
-    productos: "Productos / servicios",
-    carrierVolumen: "Carrier mayor volumen",
-    carrierVolumenOtro: "Otro carrier (volumen)",
-    atencionEjecutivo: "Atención ejecutivo",
+    nombreNegocio: "Nombre del negocio",
+    estado: "Estado",
+    municipio: "Municipio",
+    ejecutivoVentas: "Ejecutivo de ventas",
+    coordinadoraTrade: "Coordinadora Trade",
+    satisfaccionGeneral: "Satisfacción general (1–5)",
+    satisfaccionGeneralPorque: "¿Por qué? (satisfacción)",
+    nps: "Recomendación (0–5)",
+    atencionEjecutivo: "Atención ejecutivo (1–5)",
+    atencionPorque: "¿Por qué? (atención)",
     frecuenciaVisita: "Frecuencia de visita",
-    materialPop: "Material POP recibido",
-    materialPopOtro: "Otro material POP",
-    calidadEjecutivo: "Calidad ejecutivo de ventas (legacy)",
-    conocimientoBeneficios: "Beneficios YAAVSER (legacy)",
-    sigueRedes: "¿Nos sigue en redes?",
+    productos: "Productos / servicios",
+    productosOtro: "Otro producto",
+    productoMayorDemanda: "Producto mayor demanda",
+    ventasSemana: "Ventas última semana",
+    carrierVolumen: "Compañía mayor volumen",
+    carrierVolumenOtro: "Otra compañía",
+    materialesRecibidos: "Materiales recibidos",
+    materialesRecibidosOtro: "Otro material recibido",
+    apoyosNecesarios: "Apoyos necesarios",
+    apoyosNecesariosOtro: "Otro apoyo",
+    apoyoMasUrgente: "Apoyo más urgente",
+    activacionRealizada: "Activación últimos 3 meses",
+    utilidadActivacion: "Utilidad de activación",
     redesSociales: "Redes sociales",
+    redesSocialesOtro: "Otra red social",
+    visitaWeb: "Visita página web",
+    medioInfo: "Medio preferido info",
+    medioInfoOtro: "Otro medio info",
     otroDistribuidor: "¿Otro distribuidor?",
     otroDistribuidorCual: "Otro distribuidor (cuál)",
-    otroDistribuidorBeneficios: "Beneficios otro distribuidor",
-    comentarios: "Comentarios",
-    // Respuestas anteriores al cambio de encuesta
+    comisiones: "Comisiones otros distribuidores",
+    cambioImportante: "Cambio más importante",
+    formatoPdv: "Formato PDV",
+    formatoPdvOtro: "Otro formato PDV",
+    entornoPdv: "Entorno PDV",
+    entornoPdvOtro: "Otro entorno PDV",
+    ubicacionCalle: "Ubicación en calle",
+    materialesExhibidos: "Materiales exhibidos",
+    materialesExhibidosOtro: "Otro material exhibido",
+    estadoMateriales: "Estado físico materiales",
+    estadoMaterialesDetalle: "Detalle estado materiales",
+    visibilidadMensajes: "Visibilidad mensajes",
+    visibilidadDetalle: "Detalle visibilidad",
+    vigenciaPromociones: "Vigencia promociones",
+    vigenciaDetalle: "Detalle vigencia",
+    evidenciaSeguimiento: "Evidencia / seguimiento",
+    // Legacy
+    npsPorque: "¿Por qué? (legacy)",
+    materialPop: "Material POP (legacy)",
+    materialPopOtro: "Otro POP (legacy)",
+    sigueRedes: "¿Sigue redes? (legacy)",
+    otroDistribuidorBeneficios: "Beneficios distribuidor (legacy)",
+    comentarios: "Comentarios (legacy)",
     actualizacionPop: "Actualización POP (legacy)",
     satisfaccionPop: "Satisfacción POP (legacy)",
     calidadTrade: "Calidad Trade (legacy)",
+    calidadEjecutivo: "Calidad ejecutivo (legacy)",
+    conocimientoBeneficios: "Beneficios YAAVSER (legacy)",
     mejorarPop: "Mejorar POP (legacy)",
     mejorarPopOtro: "Otro POP (legacy)",
   };
@@ -120,18 +158,22 @@
         if (!q) return true;
         const blob = [
           r.claveYaavser,
-          r.comentarios,
+          r.nombreNegocio,
+          r.estado,
+          r.municipio,
+          r.ejecutivoVentas,
+          r.coordinadoraTrade,
           r.productos,
+          r.productoMayorDemanda,
           r.carrierVolumen,
           r.carrierVolumenOtro,
           r.frecuenciaVisita,
-          r.materialPop,
-          r.materialPopOtro,
-          r.npsPorque,
-          r.sigueRedes,
+          r.materialesRecibidos,
+          r.apoyosNecesarios,
           r.redesSociales,
+          r.cambioImportante,
           r.otroDistribuidorCual,
-          r.otroDistribuidorBeneficios,
+          r.comentarios,
         ]
           .join(" ")
           .toLowerCase();
@@ -229,6 +271,51 @@
     });
   }
 
+  function upsertBar(name, canvasId, emptyId, labels, values) {
+    const canvas = document.getElementById(canvasId);
+    const empty = document.getElementById(emptyId);
+    if (!canvas || typeof Chart === "undefined") return;
+    const hasData = labels.length > 0;
+    empty.hidden = hasData;
+    canvas.hidden = !hasData;
+    if (!hasData) {
+      if (charts[name]) {
+        charts[name].destroy();
+        charts[name] = null;
+      }
+      return;
+    }
+    const data = {
+      labels,
+      datasets: [
+        {
+          data: values,
+          backgroundColor: labels.map((_, i) => PIE_COLORS[i % PIE_COLORS.length]),
+          borderRadius: 6,
+          maxBarThickness: 34,
+        },
+      ],
+    };
+    if (charts[name]) {
+      charts[name].data = data;
+      charts[name].update();
+      return;
+    }
+    charts[name] = new Chart(canvas, {
+      type: "bar",
+      data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        indexAxis: "y",
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true, ticks: { precision: 0 } },
+        },
+      },
+    });
+  }
+
   function renderCharts(list) {
     const npsMap = new Map();
     list.forEach((r) => {
@@ -240,9 +327,35 @@
     const npsValues = npsLabels.map((k) => npsMap.get(k));
     const sat = tallyValues(list, "satisfaccionGeneral");
     const prod = tallyValues(list, "productos");
+    const redes = tallyValues(list, "redesSociales");
+    const carrierOtro = tallyValues(list, "carrierVolumenOtro");
     upsertPie("nps", "chartNps", "emptyNps", npsLabels, npsValues);
     upsertPie("sat", "chartSat", "emptySat", sat.labels, sat.values);
     upsertPie("prod", "chartProd", "emptyProd", prod.labels.slice(0, 8), prod.values.slice(0, 8));
+    upsertBar("redes", "chartRedes", "emptyRedes", redes.labels, redes.values);
+    upsertBar("carrierOtro", "chartCarrierOtro", "emptyCarrierOtro", carrierOtro.labels, carrierOtro.values);
+  }
+
+  function renderDistribuidorTable(list) {
+    const tbody = document.getElementById("distribuidorBody");
+    const empty = document.getElementById("distribuidorEmpty");
+    if (!tbody) return;
+    const rows = list.filter((r) => String(r.otroDistribuidor || "").trim() === "S\u00ed");
+    if (!rows.length) {
+      tbody.innerHTML = "";
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+    tbody.innerHTML = rows
+      .map(
+        (r) => `<tr>
+          <td>${escapeHtml(r.claveYaavser || "\u2014")}</td>
+          <td>${escapeHtml(r.otroDistribuidorCual || "\u2014")}</td>
+          <td>${escapeHtml(r.otroDistribuidorBeneficios || "\u2014")}</td>
+        </tr>`,
+      )
+      .join("");
   }
 
   function cardHtml(r) {
@@ -255,8 +368,10 @@
           </div>
           <div class="item-body">
             <h2>${escapeHtml(r.claveYaavser || "Sin clave")}</h2>
-            <p class="item-line">Atención ${escapeHtml(r.atencionEjecutivo || "—")} · General ${escapeHtml(r.satisfaccionGeneral || "—")}</p>
-            <p class="item-meta">${escapeHtml(r.frecuenciaVisita || "—")}</p>
+            <p class="item-line">${escapeHtml(r.nombreNegocio || r.municipio || "—")} · Atención ${escapeHtml(
+              r.atencionEjecutivo || "—",
+            )} · General ${escapeHtml(r.satisfaccionGeneral || "—")}</p>
+            <p class="item-meta">${escapeHtml(r.frecuenciaVisita || r.carrierVolumen || "—")}</p>
             <p class="item-date">${formatDate(r.receivedAt || r.timestamp)}</p>
           </div>
         </button>
@@ -277,7 +392,14 @@
       .map((key) => {
         let val = r[key];
         if (Array.isArray(val)) val = val.join(", ");
-        if (val == null || String(val).trim() === "") return "";
+        else if (val && typeof val === "object") {
+          try {
+            val = JSON.stringify(val);
+          } catch (_) {
+            val = String(val);
+          }
+        }
+        if (val == null || String(val).trim() === "" || String(val) === "{}") return "";
         return `<div class="modal-row"><b>${LABELS[key]}</b><span>${escapeHtml(val)}</span></div>`;
       })
       .join("");
@@ -293,6 +415,7 @@
     groupTitle.textContent = list.length === 1 ? "Respuesta" : "Respuestas";
     renderMetrics(list);
     renderCharts(list);
+    renderDistribuidorTable(list);
     if (!list.length) {
       boardEl.innerHTML = "";
       emptyEl.hidden = false;

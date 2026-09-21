@@ -8,9 +8,16 @@
   const submitBtn = document.getElementById("submitBtn");
 
   if (!form) {
-    console.error("[trade] No se encontró #tradeForm. ¿Se cargó /trade/app.js?");
+    console.error("[trade] No se encontró #tradeForm.");
     return;
   }
+
+  const EXCLUDE_PRODUCTOS = "Ninguno de los anteriores";
+  const EXCLUDE_MATERIALES = "No he recibido materiales";
+  const EXCLUDE_APOYOS = "No requiero apoyo por ahora";
+  const EXCLUDE_REDES = ["No sigo a YAAVS en redes sociales", "No recuerdo"];
+  const EXCLUDE_EXHIBIDOS = "No hay materiales exhibidos";
+
   function showToast(msg) {
     if (!toast) return;
     toast.textContent = msg;
@@ -44,26 +51,26 @@
 
   function focusFirstInvalid() {
     const el =
-      form.querySelector(".is-invalid input, .is-invalid textarea, input.is-invalid, textarea.is-invalid") ||
+      form.querySelector(".is-invalid input, .is-invalid textarea, .is-invalid select, input.is-invalid, textarea.is-invalid, select.is-invalid") ||
       form.querySelector(".is-invalid");
     el?.scrollIntoView?.({ behavior: "smooth", block: "center" });
     if (el && typeof el.focus === "function" && el.tagName !== "DIV") el.focus();
   }
 
-  function fillNps() {
-    const box = document.getElementById("npsScale");
+  function fillScale(boxId, name, from, to) {
+    const box = document.getElementById(boxId);
     if (!box) return;
-    box.innerHTML = Array.from({ length: 5 }, (_, i) => {
-      const n = i + 1;
-      return `<label><input type="radio" name="nps" value="${n}" required /><span>${n}</span></label>`;
-    }).join("");
+    const items = [];
+    for (let n = from; n <= to; n++) items.push(n);
+    box.innerHTML = items
+      .map((n) => `<label><input type="radio" name="${name}" value="${n}" required /><span>${n}</span></label>`)
+      .join("");
   }
 
   function fillChecks(boxId, name, items) {
     const box = document.getElementById(boxId);
     if (!box) return;
-    const list = Array.isArray(items) ? items : [];
-    box.innerHTML = list
+    box.innerHTML = (items || [])
       .map(
         (label) =>
           `<label><input type="checkbox" name="${name}" value="${escapeHtml(label)}" /> <span>${escapeHtml(
@@ -73,29 +80,75 @@
       .join("");
   }
 
-  function fillRadios(boxId, name, items, asObjects = false) {
+  function fillRadios(boxId, name, items) {
     const box = document.getElementById(boxId);
     if (!box) return;
-    const list = Array.isArray(items) ? items : [];
-    box.innerHTML = list
-      .map((item) => {
-        const value = asObjects ? item.value : item;
-        const label = asObjects ? item.label : item;
-        const badge = asObjects
-          ? `<span class="scale-val">${escapeHtml(value)}</span>`
-          : "";
-        return `<label><input type="radio" name="${name}" value="${escapeHtml(value)}" required /> ${badge}<span>${escapeHtml(
-          label,
-        )}</span></label>`;
-      })
+    box.innerHTML = (items || [])
+      .map(
+        (label) =>
+          `<label><input type="radio" name="${name}" value="${escapeHtml(label)}" required /> <span>${escapeHtml(
+            label,
+          )}</span></label>`,
+      )
       .join("");
   }
 
-  function syncCarrierVolumenOtro() {
-    const val = form.querySelector('input[name="carrierVolumen"]:checked')?.value || "";
-    const wrap = document.getElementById("carrierVolumenOtroWrap");
-    const input = form.elements.namedItem("carrierVolumenOtro");
-    const open = val === "Otro";
+  function fillVentasSemana() {
+    const box = document.getElementById("ventasSemanaBox");
+    if (!box) return;
+    box.innerHTML = (opts.ventasSemanaKeys || [])
+      .map(
+        (item) => `
+        <label class="field">
+          <span>${escapeHtml(item.label)} <span class="req">*</span></span>
+          <input type="number" min="0" step="1" name="venta_${item.key}" required placeholder="0" />
+        </label>`,
+      )
+      .join("");
+  }
+
+  function fillComisiones() {
+    const box = document.getElementById("comisionesBox");
+    if (!box) return;
+    box.innerHTML = (opts.comisionProductos || [])
+      .map(
+        (item) => `
+        <div class="comision-row">
+          <strong>${escapeHtml(item.label)}</strong>
+          <input type="text" name="comision_${item.key}_monto" placeholder="Comisión ($ o %)" />
+          <input type="text" name="comision_${item.key}_condicion" placeholder="Operación / condición" />
+        </div>`,
+      )
+      .join("");
+  }
+
+  function checked(name) {
+    return [...form.querySelectorAll(`input[name="${name}"]:checked`)].map((el) => el.value);
+  }
+
+  function radio(name) {
+    return form.querySelector(`input[name="${name}"]:checked`)?.value || "";
+  }
+
+  function syncExclusiveChecks(name, excludeValues, onChange) {
+    const selected = checked(name);
+    const hasExclude = selected.some((v) => excludeValues.includes(v));
+    if (hasExclude && selected.length > 1) {
+      form.querySelectorAll(`input[name="${name}"]`).forEach((el) => {
+        if (!excludeValues.includes(el.value)) el.checked = false;
+      });
+    }
+    onChange?.();
+  }
+
+  function syncOtro(name, wrapId, inputName, otroLabel = "Otro") {
+    const selected = checked(name);
+    const val = radio(name);
+    const isCheck = form.querySelectorAll(`input[name="${name}"][type="checkbox"]`).length > 0;
+    const open = isCheck ? selected.some((v) => v === otroLabel || v.startsWith("Otra")) : val === otroLabel || val.startsWith("Otra");
+    const wrap = document.getElementById(wrapId);
+    const input = form.elements.namedItem(inputName);
+    if (!wrap || !input) return;
     wrap.hidden = !open;
     if (!open) {
       input.value = "";
@@ -106,170 +159,430 @@
     }
   }
 
-  function syncMaterialPopOtro() {
-    const checked = [...form.querySelectorAll('input[name="materialPop"]:checked')].map((el) => el.value);
-    const wrap = document.getElementById("materialPopOtroWrap");
-    const input = form.elements.namedItem("materialPopOtro");
-    const open = checked.includes("Otro");
-    wrap.hidden = !open;
-    if (!open) {
-      input.value = "";
-      input.removeAttribute("required");
-      input.classList.remove("is-invalid");
-    } else {
-      input.setAttribute("required", "required");
+  function syncProductos() {
+    syncExclusiveChecks("productos", [EXCLUDE_PRODUCTOS]);
+    const selected = checked("productos");
+    const ninguno = selected.includes(EXCLUDE_PRODUCTOS);
+    syncOtro("productos", "productosOtroWrap", "productosOtro", "Otro");
+
+    const wrap = document.getElementById("productoMayorDemandaWrap");
+    const select = document.getElementById("productoMayorDemanda");
+    if (!wrap || !select) return;
+
+    if (ninguno || !selected.length) {
+      wrap.hidden = true;
+      select.innerHTML = '<option value="">Selecciona…</option>';
+      select.value = "";
+      select.removeAttribute("required");
+      return;
     }
+
+    wrap.hidden = false;
+    select.setAttribute("required", "required");
+    const options = selected.filter((v) => v !== "Otro" && v !== EXCLUDE_PRODUCTOS);
+    if (selected.includes("Otro")) {
+      const otro = String(form.elements.namedItem("productosOtro")?.value || "").trim();
+      if (otro) options.push(otro);
+    }
+    const prev = select.value;
+    select.innerHTML =
+      '<option value="">Selecciona…</option>' +
+      options.map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
+    if (options.includes(prev)) select.value = prev;
   }
 
-  function syncRedesSociales() {
-    const wrap = document.getElementById("redesSocialesWrap");
-    const box = document.getElementById("redesSocialesBox");
-    const sigue = form.querySelector('input[name="sigueRedes"]:checked')?.value || "";
-    const open = sigue === "Sí";
+  function syncMaterialesRecibidos() {
+    syncExclusiveChecks("materialesRecibidos", [EXCLUDE_MATERIALES]);
+    syncOtro("materialesRecibidos", "materialesRecibidosOtroWrap", "materialesRecibidosOtro", "Otro");
+  }
+
+  function syncApoyos() {
+    const selected = checked("apoyosNecesarios");
+    const noApoyo = selected.includes(EXCLUDE_APOYOS);
+    if (noApoyo && selected.length > 1) {
+      form.querySelectorAll('input[name="apoyosNecesarios"]').forEach((el) => {
+        if (el.value !== EXCLUDE_APOYOS) el.checked = false;
+      });
+    }
+    // max 3 (excluding "No requiero")
+    let current = checked("apoyosNecesarios").filter((v) => v !== EXCLUDE_APOYOS);
+    if (current.length > 3) {
+      // uncheck the last clicked if over limit - handled in change by reverting
+    }
+    syncOtro("apoyosNecesarios", "apoyosNecesariosOtroWrap", "apoyosNecesariosOtro", "Otro");
+
+    const wrap = document.getElementById("apoyoMasUrgenteWrap");
+    const select = document.getElementById("apoyoMasUrgente");
+    current = checked("apoyosNecesarios");
+    const none = current.includes(EXCLUDE_APOYOS) || !current.length;
+    if (!wrap || !select) return;
+    if (none) {
+      wrap.hidden = true;
+      select.innerHTML = '<option value="">Selecciona…</option>';
+      select.value = "";
+      select.removeAttribute("required");
+      return;
+    }
+    wrap.hidden = false;
+    select.setAttribute("required", "required");
+    const options = current.filter((v) => v !== "Otro" && v !== EXCLUDE_APOYOS);
+    if (current.includes("Otro")) {
+      const otro = String(form.elements.namedItem("apoyosNecesariosOtro")?.value || "").trim();
+      if (otro) options.push(otro);
+    }
+    const prev = select.value;
+    select.innerHTML =
+      '<option value="">Selecciona…</option>' +
+      options.map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
+    if (options.includes(prev)) select.value = prev;
+  }
+
+  function syncActivacion() {
+    const wrap = document.getElementById("utilidadActivacionWrap");
+    const open = radio("activacionRealizada") === "Sí";
     wrap.hidden = !open;
+    const box = document.getElementById("utilidadActivacionBox");
     if (!open) {
       box.querySelectorAll("input").forEach((el) => {
         el.checked = false;
+        el.removeAttribute("required");
       });
       box.classList.remove("is-invalid");
+    } else {
+      box.querySelectorAll("input").forEach((el) => el.setAttribute("required", "required"));
     }
   }
 
-  function syncOtroDistribuidor() {
-    const wrap = document.getElementById("otroDistribuidorWrap");
-    const cual = form.elements.namedItem("otroDistribuidorCual");
-    const beneficios = form.elements.namedItem("otroDistribuidorBeneficios");
-    const val = form.querySelector('input[name="otroDistribuidor"]:checked')?.value || "";
-    const open = val === "Sí";
-    wrap.hidden = !open;
+  function syncRedes() {
+    syncExclusiveChecks("redesSociales", EXCLUDE_REDES);
+    syncOtro("redesSociales", "redesSocialesOtroWrap", "redesSocialesOtro", "Otra");
+  }
+
+  function syncMedioInfo() {
+    syncOtro("medioInfo", "medioInfoOtroWrap", "medioInfoOtro", "Otro");
+  }
+
+  function syncCarrier() {
+    syncOtro("carrierVolumen", "carrierVolumenOtroWrap", "carrierVolumenOtro", "Otra");
+  }
+
+  function syncDistribuidor() {
+    const open = radio("otroDistribuidor") === "Sí";
+    document.getElementById("otroDistribuidorWrap").hidden = !open;
+    document.getElementById("comisionesSection").hidden = !open;
     if (!open) {
-      cual.value = "";
-      beneficios.value = "";
-      cual.removeAttribute("required");
-      beneficios.removeAttribute("required");
-      cual.classList.remove("is-invalid");
-      beneficios.classList.remove("is-invalid");
-    } else {
-      cual.setAttribute("required", "required");
-      beneficios.setAttribute("required", "required");
+      const cual = form.elements.namedItem("otroDistribuidorCual");
+      if (cual) cual.value = "";
     }
+  }
+
+  function syncFormatoPdv() {
+    syncOtro("formatoPdv", "formatoPdvOtroWrap", "formatoPdvOtro", "Otro");
+  }
+
+  function syncEntornoPdv() {
+    syncOtro("entornoPdv", "entornoPdvOtroWrap", "entornoPdvOtro", "Otro");
+    const entorno = radio("entornoPdv");
+    const wrap = document.getElementById("ubicacionCalleWrap");
+    const show = entorno === "Calle o colonia";
+    wrap.hidden = !show;
+    if (!show) {
+      form.querySelectorAll('input[name="ubicacionCalle"]').forEach((el) => {
+        el.checked = false;
+      });
+    }
+  }
+
+  function syncMaterialesExhibidos() {
+    syncExclusiveChecks("materialesExhibidos", [EXCLUDE_EXHIBIDOS]);
+    syncOtro("materialesExhibidos", "materialesExhibidosOtroWrap", "materialesExhibidosOtro", "Otro");
+    const none = checked("materialesExhibidos").includes(EXCLUDE_EXHIBIDOS);
+    const wrap = document.getElementById("observacionMaterialesWrap");
+    wrap.hidden = none;
+    if (none) {
+      ["estadoMateriales", "visibilidadMensajes", "vigenciaPromociones"].forEach((name) => {
+        form.querySelectorAll(`input[name="${name}"]`).forEach((el) => {
+          el.checked = false;
+        });
+      });
+      ["estadoMaterialesDetalle", "visibilidadDetalle", "vigenciaDetalle"].forEach((n) => {
+        const el = form.elements.namedItem(n);
+        if (el) el.value = "";
+      });
+      document.getElementById("estadoMaterialesDetalleWrap").hidden = true;
+      document.getElementById("visibilidadDetalleWrap").hidden = true;
+      document.getElementById("vigenciaDetalleWrap").hidden = true;
+    }
+  }
+
+  function syncEstadoMateriales() {
+    const val = radio("estadoMateriales");
+    const wrap = document.getElementById("estadoMaterialesDetalleWrap");
+    const open = val === "Hay material roto o muy deteriorado";
+    wrap.hidden = !open;
+    const input = form.elements.namedItem("estadoMaterialesDetalle");
+    if (!open) {
+      input.value = "";
+      input.removeAttribute("required");
+    } else {
+      input.setAttribute("required", "required");
+    }
+  }
+
+  function syncVisibilidad() {
+    const val = radio("visibilidadMensajes");
+    const wrap = document.getElementById("visibilidadDetalleWrap");
+    wrap.hidden = !(val === "Parcial: algunos no se ven o no se leen" || val === "Mala: los mensajes principales no se leen");
+  }
+
+  function syncVigencia() {
+    const val = radio("vigenciaPromociones");
+    const wrap = document.getElementById("vigenciaDetalleWrap");
+    wrap.hidden = val !== "Hay promociones vencidas";
   }
 
   function collectAnswers() {
     const fd = new FormData(form);
-    const productos = [...form.querySelectorAll('input[name="productos"]:checked')].map((el) => el.value);
-    const materialPop = [...form.querySelectorAll('input[name="materialPop"]:checked')].map((el) => el.value);
-    const sigueRedes = String(fd.get("sigueRedes") || "").trim();
-    const otroDistribuidor = String(fd.get("otroDistribuidor") || "").trim();
-    const redesSociales =
-      sigueRedes === "Sí"
-        ? [...form.querySelectorAll('input[name="redesSociales"]:checked')].map((el) => el.value)
-        : [];
+    const productos = checked("productos");
+    const materialesRecibidos = checked("materialesRecibidos");
+    const apoyosNecesarios = checked("apoyosNecesarios");
+    const redesSociales = checked("redesSociales");
+    const materialesExhibidos = checked("materialesExhibidos");
+    const otroDistribuidor = radio("otroDistribuidor");
+    const activacionRealizada = radio("activacionRealizada");
+    const noMaterialesExhibidos = materialesExhibidos.includes(EXCLUDE_EXHIBIDOS);
+
+    const ventasSemana = {};
+    (opts.ventasSemanaKeys || []).forEach((item) => {
+      ventasSemana[item.key] = String(fd.get(`venta_${item.key}`) || "").trim();
+    });
+
+    const comisiones = {};
+    if (otroDistribuidor === "Sí") {
+      (opts.comisionProductos || []).forEach((item) => {
+        comisiones[item.key] = {
+          monto: String(fd.get(`comision_${item.key}_monto`) || "").trim(),
+          condicion: String(fd.get(`comision_${item.key}_condicion`) || "").trim(),
+        };
+      });
+    }
+
     return {
+      fechaEncuesta: String(fd.get("fechaEncuesta") || "").trim(),
       claveYaavser: String(fd.get("claveYaavser") || "").trim(),
+      nombreNegocio: String(fd.get("nombreNegocio") || "").trim(),
+      estado: String(fd.get("estado") || "").trim(),
+      municipio: String(fd.get("municipio") || "").trim(),
+      ejecutivoVentas: String(fd.get("ejecutivoVentas") || "").trim(),
+      coordinadoraTrade: String(fd.get("coordinadoraTrade") || "").trim(),
       satisfaccionGeneral: String(fd.get("satisfaccionGeneral") || "").trim(),
+      satisfaccionGeneralPorque: String(fd.get("satisfaccionGeneralPorque") || "").trim(),
       nps: String(fd.get("nps") || "").trim(),
-      npsPorque: String(fd.get("npsPorque") || "").trim(),
-      productos,
-      carrierVolumen: String(fd.get("carrierVolumen") || "").trim(),
-      carrierVolumenOtro: String(fd.get("carrierVolumenOtro") || "").trim(),
       atencionEjecutivo: String(fd.get("atencionEjecutivo") || "").trim(),
-      frecuenciaVisita: String(fd.get("frecuenciaVisita") || "").trim(),
-      materialPop,
-      materialPopOtro: String(fd.get("materialPopOtro") || "").trim(),
-      sigueRedes,
+      atencionPorque: String(fd.get("atencionPorque") || "").trim(),
+      frecuenciaVisita: radio("frecuenciaVisita"),
+      productos,
+      productosOtro: String(fd.get("productosOtro") || "").trim(),
+      productoMayorDemanda: productos.includes(EXCLUDE_PRODUCTOS)
+        ? ""
+        : String(fd.get("productoMayorDemanda") || "").trim(),
+      ventasSemana,
+      carrierVolumen: radio("carrierVolumen"),
+      carrierVolumenOtro: String(fd.get("carrierVolumenOtro") || "").trim(),
+      materialesRecibidos,
+      materialesRecibidosOtro: String(fd.get("materialesRecibidosOtro") || "").trim(),
+      apoyosNecesarios,
+      apoyosNecesariosOtro: String(fd.get("apoyosNecesariosOtro") || "").trim(),
+      apoyoMasUrgente: apoyosNecesarios.includes(EXCLUDE_APOYOS)
+        ? ""
+        : String(fd.get("apoyoMasUrgente") || "").trim(),
+      activacionRealizada,
+      utilidadActivacion: activacionRealizada === "Sí" ? radio("utilidadActivacion") : "",
       redesSociales,
+      redesSocialesOtro: String(fd.get("redesSocialesOtro") || "").trim(),
+      visitaWeb: radio("visitaWeb"),
+      medioInfo: radio("medioInfo"),
+      medioInfoOtro: String(fd.get("medioInfoOtro") || "").trim(),
       otroDistribuidor,
       otroDistribuidorCual: otroDistribuidor === "Sí" ? String(fd.get("otroDistribuidorCual") || "").trim() : "",
-      otroDistribuidorBeneficios:
-        otroDistribuidor === "Sí" ? String(fd.get("otroDistribuidorBeneficios") || "").trim() : "",
-      comentarios: String(fd.get("comentarios") || "").trim(),
+      comisiones,
+      cambioImportante: String(fd.get("cambioImportante") || "").trim(),
+      formatoPdv: radio("formatoPdv"),
+      formatoPdvOtro: String(fd.get("formatoPdvOtro") || "").trim(),
+      entornoPdv: radio("entornoPdv"),
+      entornoPdvOtro: String(fd.get("entornoPdvOtro") || "").trim(),
+      ubicacionCalle: radio("entornoPdv") === "Calle o colonia" ? radio("ubicacionCalle") : "",
+      materialesExhibidos,
+      materialesExhibidosOtro: String(fd.get("materialesExhibidosOtro") || "").trim(),
+      estadoMateriales: noMaterialesExhibidos ? "" : radio("estadoMateriales"),
+      estadoMaterialesDetalle: String(fd.get("estadoMaterialesDetalle") || "").trim(),
+      visibilidadMensajes: noMaterialesExhibidos ? "" : radio("visibilidadMensajes"),
+      visibilidadDetalle: String(fd.get("visibilidadDetalle") || "").trim(),
+      vigenciaPromociones: noMaterialesExhibidos ? "" : radio("vigenciaPromociones"),
+      vigenciaDetalle: String(fd.get("vigenciaDetalle") || "").trim(),
+      evidenciaSeguimiento: String(fd.get("evidenciaSeguimiento") || "").trim(),
     };
   }
 
   function validate(a) {
     clearInvalid();
-    if (isBlank(a.claveYaavser)) {
-      markInvalid(form.elements.namedItem("claveYaavser"));
-      return "Captura la clave YAAVSER.";
+    const req = (cond, el, msg) => {
+      if (cond) {
+        markInvalid(el);
+        return msg;
+      }
+      return "";
+    };
+
+    let err =
+      req(isBlank(a.fechaEncuesta), form.elements.namedItem("fechaEncuesta"), "Captura la fecha.") ||
+      req(isBlank(a.claveYaavser), form.elements.namedItem("claveYaavser"), "Captura la clave YAAVSER.") ||
+      req(isBlank(a.nombreNegocio), form.elements.namedItem("nombreNegocio"), "Captura el nombre del negocio.") ||
+      req(isBlank(a.estado), form.elements.namedItem("estado"), "Captura el estado.") ||
+      req(isBlank(a.municipio), form.elements.namedItem("municipio"), "Captura el municipio o alcaldía.") ||
+      req(isBlank(a.ejecutivoVentas), form.elements.namedItem("ejecutivoVentas"), "Captura el ejecutivo de ventas.") ||
+      req(isBlank(a.coordinadoraTrade), form.elements.namedItem("coordinadoraTrade"), "Captura la coordinadora de Trade.") ||
+      req(isBlank(a.satisfaccionGeneral), document.getElementById("satisfaccionGeneralBox"), "Califica la satisfacción general.") ||
+      req(isBlank(a.satisfaccionGeneralPorque), form.elements.namedItem("satisfaccionGeneralPorque"), "Indica por qué esa satisfacción.") ||
+      req(isBlank(a.nps), document.getElementById("npsScale"), "Selecciona la probabilidad de recomendación (0 a 5).") ||
+      req(isBlank(a.atencionEjecutivo), document.getElementById("atencionBox"), "Califica la atención del ejecutivo.") ||
+      req(isBlank(a.atencionPorque), form.elements.namedItem("atencionPorque"), "Indica por qué esa calificación de atención.") ||
+      req(isBlank(a.frecuenciaVisita), document.getElementById("frecuenciaBox"), "Indica la frecuencia de visita.");
+    if (err) return err;
+
+    if (!a.productos.length) return markInvalid(document.getElementById("productosBox")), "Marca al menos un producto o servicio.";
+    if (a.productos.includes("Otro") && isBlank(a.productosOtro)) {
+      return markInvalid(form.elements.namedItem("productosOtro")), "Especifica el otro producto.";
     }
-    if (isBlank(a.satisfaccionGeneral)) {
-      markInvalid(document.getElementById("satisfaccionGeneralBox"));
-      return "Califica tu experiencia general con YAAVS.";
+    if (!a.productos.includes(EXCLUDE_PRODUCTOS) && isBlank(a.productoMayorDemanda)) {
+      return markInvalid(document.getElementById("productoMayorDemanda")), "Indica cuál producto tiene mayor demanda.";
     }
-    if (isBlank(a.nps)) {
-      markInvalid(document.getElementById("npsScale"));
-      return "Selecciona una calificación de 1 a 5.";
+
+    for (const item of opts.ventasSemanaKeys || []) {
+      if (isBlank(a.ventasSemana[item.key])) {
+        return markInvalid(form.elements.namedItem(`venta_${item.key}`)), `Captura la cantidad de ${item.label}.`;
+      }
     }
-    if (isBlank(a.npsPorque)) {
-      markInvalid(form.elements.namedItem("npsPorque"));
-      return "Cuéntanos por qué diste esa calificación.";
+
+    if (isBlank(a.carrierVolumen)) return markInvalid(document.getElementById("carrierVolumenBox")), "Indica la compañía con mayor volumen.";
+    if (a.carrierVolumen === "Otra" && isBlank(a.carrierVolumenOtro)) {
+      return markInvalid(form.elements.namedItem("carrierVolumenOtro")), "Especifica la otra compañía.";
     }
-    if (!a.productos.length) {
-      markInvalid(document.getElementById("productosBox"));
-      return "Marca al menos un producto o servicio.";
+
+    if (!a.materialesRecibidos.length) {
+      return markInvalid(document.getElementById("materialesRecibidosBox")), "Marca al menos una opción de materiales recibidos.";
     }
-    if (isBlank(a.carrierVolumen)) {
-      markInvalid(document.getElementById("carrierVolumenBox"));
-      return "Indica qué carrier tiene mayor volumen de ventas.";
+    if (a.materialesRecibidos.includes("Otro") && isBlank(a.materialesRecibidosOtro)) {
+      return markInvalid(form.elements.namedItem("materialesRecibidosOtro")), "Especifica el otro material recibido.";
     }
-    if (a.carrierVolumen === "Otro" && isBlank(a.carrierVolumenOtro)) {
-      markInvalid(form.elements.namedItem("carrierVolumenOtro"));
-      return "Especifica el otro carrier.";
+
+    if (!a.apoyosNecesarios.length) {
+      return markInvalid(document.getElementById("apoyosNecesariosBox")), "Marca al menos un apoyo (o que no requieres).";
     }
-    if (isBlank(a.atencionEjecutivo)) {
-      markInvalid(document.getElementById("atencionBox"));
-      return "Califica la atención del ejecutivo de ventas.";
+    const apoyosActivos = a.apoyosNecesarios.filter((v) => v !== EXCLUDE_APOYOS);
+    if (apoyosActivos.length > 3) {
+      return markInvalid(document.getElementById("apoyosNecesariosBox")), "Selecciona máximo 3 apoyos.";
     }
-    if (isBlank(a.frecuenciaVisita)) {
-      markInvalid(document.getElementById("frecuenciaBox"));
-      return "Indica la frecuencia de visita.";
+    if (a.apoyosNecesarios.includes("Otro") && isBlank(a.apoyosNecesariosOtro)) {
+      return markInvalid(form.elements.namedItem("apoyosNecesariosOtro")), "Especifica el otro apoyo.";
     }
-    if (!a.materialPop.length) {
-      markInvalid(document.getElementById("materialPopBox"));
-      return "Marca al menos un material POP recibido.";
+    if (!a.apoyosNecesarios.includes(EXCLUDE_APOYOS) && isBlank(a.apoyoMasUrgente)) {
+      return markInvalid(document.getElementById("apoyoMasUrgente")), "Indica el apoyo más urgente.";
     }
-    if (a.materialPop.includes("Otro") && isBlank(a.materialPopOtro)) {
-      markInvalid(form.elements.namedItem("materialPopOtro"));
-      return "Especifica el otro material POP.";
+
+    if (isBlank(a.activacionRealizada)) {
+      return markInvalid(document.getElementById("activacionRealizadaBox")), "Indica si hubo activación.";
     }
-    if (isBlank(a.sigueRedes)) {
-      markInvalid(document.getElementById("sigueRedesBox"));
-      return "Indica si nos sigues en redes sociales.";
+    if (a.activacionRealizada === "Sí" && isBlank(a.utilidadActivacion)) {
+      return markInvalid(document.getElementById("utilidadActivacionBox")), "Califica la utilidad de la activación.";
     }
-    if (a.sigueRedes === "Sí" && !a.redesSociales.length) {
-      markInvalid(document.getElementById("redesSocialesBox"));
-      return "Marca al menos una red social.";
+
+    if (!a.redesSociales.length) {
+      return markInvalid(document.getElementById("redesSocialesBox")), "Marca al menos una opción de redes sociales.";
     }
+    if (a.redesSociales.includes("Otra") && isBlank(a.redesSocialesOtro)) {
+      return markInvalid(form.elements.namedItem("redesSocialesOtro")), "Especifica la otra red social.";
+    }
+
+    if (isBlank(a.visitaWeb)) return markInvalid(document.getElementById("visitaWebBox")), "Indica si visitaste la página web.";
+    if (isBlank(a.medioInfo)) return markInvalid(document.getElementById("medioInfoBox")), "Indica el medio preferido de información.";
+    if (a.medioInfo === "Otro" && isBlank(a.medioInfoOtro)) {
+      return markInvalid(form.elements.namedItem("medioInfoOtro")), "Especifica el otro medio.";
+    }
+
     if (isBlank(a.otroDistribuidor)) {
-      markInvalid(document.getElementById("otroDistribuidorBox"));
-      return "Indica si trabajas con otro distribuidor.";
+      return markInvalid(document.getElementById("otroDistribuidorBox")), "Indica si trabajas con otro distribuidor.";
     }
-    if (a.otroDistribuidor === "Sí" && isBlank(a.otroDistribuidorCual)) {
-      markInvalid(form.elements.namedItem("otroDistribuidorCual"));
-      return "Indica cuál es el otro distribuidor.";
+    if (isBlank(a.cambioImportante)) {
+      return markInvalid(form.elements.namedItem("cambioImportante")), "Describe el cambio más importante.";
     }
-    if (a.otroDistribuidor === "Sí" && isBlank(a.otroDistribuidorBeneficios)) {
-      markInvalid(form.elements.namedItem("otroDistribuidorBeneficios"));
-      return "Indica qué beneficios te otorga el otro distribuidor.";
+
+    if (isBlank(a.formatoPdv)) return markInvalid(document.getElementById("formatoPdvBox")), "Indica el formato del PDV.";
+    if (a.formatoPdv === "Otro" && isBlank(a.formatoPdvOtro)) {
+      return markInvalid(form.elements.namedItem("formatoPdvOtro")), "Especifica el otro formato.";
     }
-    if (isBlank(a.comentarios)) {
-      markInvalid(form.elements.namedItem("comentarios"));
-      return "Escribe comentarios (si no hay, “Ninguna”).";
+    if (isBlank(a.entornoPdv)) return markInvalid(document.getElementById("entornoPdvBox")), "Indica el entorno del PDV.";
+    if (a.entornoPdv === "Otro" && isBlank(a.entornoPdvOtro)) {
+      return markInvalid(form.elements.namedItem("entornoPdvOtro")), "Especifica el otro entorno.";
     }
+    if (a.entornoPdv === "Calle o colonia" && isBlank(a.ubicacionCalle)) {
+      return markInvalid(document.getElementById("ubicacionCalleBox")), "Indica la ubicación en la calle.";
+    }
+
+    if (!a.materialesExhibidos.length) {
+      return markInvalid(document.getElementById("materialesExhibidosBox")), "Marca materiales exhibidos (o que no hay).";
+    }
+    if (a.materialesExhibidos.includes("Otro") && isBlank(a.materialesExhibidosOtro)) {
+      return markInvalid(form.elements.namedItem("materialesExhibidosOtro")), "Especifica el otro material exhibido.";
+    }
+
+    if (!a.materialesExhibidos.includes(EXCLUDE_EXHIBIDOS)) {
+      if (isBlank(a.estadoMateriales)) {
+        return markInvalid(document.getElementById("estadoMaterialesBox")), "Indica el estado físico de los materiales.";
+      }
+      if (a.estadoMateriales === "Hay material roto o muy deteriorado" && isBlank(a.estadoMaterialesDetalle)) {
+        return markInvalid(form.elements.namedItem("estadoMaterialesDetalle")), "Describe el material afectado.";
+      }
+      if (isBlank(a.visibilidadMensajes)) {
+        return markInvalid(document.getElementById("visibilidadMensajesBox")), "Indica la visibilidad de los mensajes.";
+      }
+      if (isBlank(a.vigenciaPromociones)) {
+        return markInvalid(document.getElementById("vigenciaPromocionesBox")), "Indica la vigencia de las promociones.";
+      }
+    }
+
     return "";
   }
 
   form.addEventListener("change", (e) => {
     const t = e.target;
     t?.classList?.remove("is-invalid");
-    t?.closest?.(".nps-scale, .check-grid, .choice-list, .choice-scale, .field")?.classList.remove(
+    t?.closest?.(".nps-scale, .check-grid, .choice-list, .choice-scale, .field, .ventas-semana-grid, .comisiones-grid")?.classList.remove(
       "is-invalid",
     );
-    if (t?.name === "carrierVolumen") syncCarrierVolumenOtro();
-    if (t?.name === "materialPop") syncMaterialPopOtro();
-    if (t?.name === "sigueRedes") syncRedesSociales();
-    if (t?.name === "otroDistribuidor") syncOtroDistribuidor();
+
+    if (t?.name === "apoyosNecesarios" && t.checked && t.value !== EXCLUDE_APOYOS) {
+      const current = checked("apoyosNecesarios").filter((v) => v !== EXCLUDE_APOYOS);
+      if (current.length > 3) {
+        t.checked = false;
+        showToast("Máximo 3 apoyos.");
+      }
+    }
+
+    if (t?.name === "productos" || t?.name === "productosOtro") syncProductos();
+    if (t?.name === "materialesRecibidos") syncMaterialesRecibidos();
+    if (t?.name === "apoyosNecesarios" || t?.name === "apoyosNecesariosOtro") syncApoyos();
+    if (t?.name === "activacionRealizada") syncActivacion();
+    if (t?.name === "redesSociales") syncRedes();
+    if (t?.name === "medioInfo") syncMedioInfo();
+    if (t?.name === "carrierVolumen") syncCarrier();
+    if (t?.name === "otroDistribuidor") syncDistribuidor();
+    if (t?.name === "formatoPdv") syncFormatoPdv();
+    if (t?.name === "entornoPdv") syncEntornoPdv();
+    if (t?.name === "materialesExhibidos") syncMaterialesExhibidos();
+    if (t?.name === "estadoMateriales") syncEstadoMateriales();
+    if (t?.name === "visibilidadMensajes") syncVisibilidad();
+    if (t?.name === "vigenciaPromociones") syncVigencia();
   });
 
   form.addEventListener("submit", async (e) => {
@@ -307,29 +620,60 @@
     }
   });
 
+  function syncAll() {
+    syncProductos();
+    syncMaterialesRecibidos();
+    syncApoyos();
+    syncActivacion();
+    syncRedes();
+    syncMedioInfo();
+    syncCarrier();
+    syncDistribuidor();
+    syncFormatoPdv();
+    syncEntornoPdv();
+    syncMaterialesExhibidos();
+    syncEstadoMateriales();
+    syncVisibilidad();
+    syncVigencia();
+  }
+
   document.getElementById("anotherBtn")?.addEventListener("click", () => {
     form.reset();
     clearInvalid();
-    syncCarrierVolumenOtro();
-    syncMaterialPopOtro();
-    syncRedesSociales();
-    syncOtroDistribuidor();
+    syncAll();
     successPanel.hidden = true;
     form.hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  fillNps();
-  fillRadios("satisfaccionGeneralBox", "satisfaccionGeneral", opts.satisfaccionGeneral || [], true);
-  fillChecks("productosBox", "productos", opts.productos || []);
-  fillRadios("carrierVolumenBox", "carrierVolumen", opts.carrierVolumen || []);
-  fillRadios("atencionBox", "atencionEjecutivo", opts.atencion || [], true);
+  // Default fecha = today
+  const fecha = form.elements.namedItem("fechaEncuesta");
+  if (fecha && !fecha.value) {
+    fecha.value = new Date().toISOString().slice(0, 10);
+  }
+
+  fillScale("satisfaccionGeneralBox", "satisfaccionGeneral", 1, 5);
+  fillScale("npsScale", "nps", 0, 5);
+  fillScale("atencionBox", "atencionEjecutivo", 1, 5);
   fillRadios("frecuenciaBox", "frecuenciaVisita", opts.frecuencia || []);
-  fillChecks("materialPopBox", "materialPop", opts.materialPop || []);
-  fillRadios("sigueRedesBox", "sigueRedes", opts.sigueRedes || []);
+  fillChecks("productosBox", "productos", opts.productos || []);
+  fillVentasSemana();
+  fillRadios("carrierVolumenBox", "carrierVolumen", opts.carrierVolumen || []);
+  fillChecks("materialesRecibidosBox", "materialesRecibidos", opts.materialesRecibidos || []);
+  fillChecks("apoyosNecesariosBox", "apoyosNecesarios", opts.apoyosNecesarios || []);
+  fillRadios("activacionRealizadaBox", "activacionRealizada", opts.activacionRealizada || []);
+  fillRadios("utilidadActivacionBox", "utilidadActivacion", opts.utilidadActivacion || []);
   fillChecks("redesSocialesBox", "redesSociales", opts.redesSociales || []);
+  fillRadios("visitaWebBox", "visitaWeb", opts.visitaWeb || []);
+  fillRadios("medioInfoBox", "medioInfo", opts.medioInfo || []);
   fillRadios("otroDistribuidorBox", "otroDistribuidor", opts.otroDistribuidor || []);
-  syncMaterialPopOtro();
-  syncRedesSociales();
-  syncOtroDistribuidor();
+  fillComisiones();
+  fillRadios("formatoPdvBox", "formatoPdv", opts.formatoPdv || []);
+  fillRadios("entornoPdvBox", "entornoPdv", opts.entornoPdv || []);
+  fillRadios("ubicacionCalleBox", "ubicacionCalle", opts.ubicacionCalle || []);
+  fillChecks("materialesExhibidosBox", "materialesExhibidos", opts.materialesExhibidos || []);
+  fillRadios("estadoMaterialesBox", "estadoMateriales", opts.estadoMateriales || []);
+  fillRadios("visibilidadMensajesBox", "visibilidadMensajes", opts.visibilidadMensajes || []);
+  fillRadios("vigenciaPromocionesBox", "vigenciaPromociones", opts.vigenciaPromociones || []);
+  syncAll();
 })();

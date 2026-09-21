@@ -6,9 +6,9 @@
     <meta name="theme-color" content="#eef4fa" />
     <meta
       name="description"
-      content="Encuesta de experiencia y Trade Marketing en punto de venta – YAAVS."
+      content="Encuesta de Trade Marketing YAAVS 2.3 – experiencia en punto de venta."
     />
-    <title>Encuesta Trade Marketing · PDV YAAVS</title>
+    <title>Encuesta Trade Marketing · YAAVS 2.3</title>
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,9 +16,9 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/styles-base.css?v=20260827t6" />
-    <link rel="stylesheet" href="/reporte.css?v=20260827t6" />
-    <link rel="stylesheet" href="/trade/trade.css?v=20260827t6" />
+    <link rel="stylesheet" href="/styles-base.css?v=20260921t1" />
+    <link rel="stylesheet" href="/reporte.css?v=20260921t1" />
+    <link rel="stylesheet" href="/trade/trade.css?v=20260921t1" />
   </head>
   <body class="report-body">
     <div class="atmosphere" aria-hidden="true">
@@ -34,11 +34,11 @@
 
     <main class="report-main">
       <section class="report-hero">
-        <p class="eyebrow">Punto de venta · Trade Marketing</p>
-        <h1>Encuesta de experiencia y Trade Marketing</h1>
+        <p class="eyebrow">Punto de venta · Trade Marketing 2.3</p>
+        <h1>Encuesta de Trade Marketing YAAVS</h1>
         <p class="lede">
-          Queremos conocer tu experiencia en el punto de venta y detectar oportunidades de mejora
-          en atención comercial, material POP y ejecución de Trade Marketing.
+          YAAVSER, queremos conocer cómo apoyamos a tu negocio y qué podemos mejorar en la
+          atención comercial, los materiales publicitarios y el punto de venta.
         </p>
       </section>
 
@@ -47,108 +47,261 @@
 
         <section class="card-section">
           <header class="section-head"><span>0</span><h2>Datos de identificación</h2></header>
+          <p class="section-note">Registro del personal que aplica la encuesta. Completar una ficha por punto de venta.</p>
+          <label class="field">
+            <span>Fecha <span class="req">*</span></span>
+            <input type="date" name="fechaEncuesta" required />
+          </label>
           <label class="field">
             <span>Clave YAAVSER <span class="req">*</span></span>
             <input type="text" name="claveYaavser" required placeholder="Ej. 25CL03636F32" autocomplete="off" />
           </label>
+          <label class="field">
+            <span>Nombre del negocio <span class="req">*</span></span>
+            <input type="text" name="nombreNegocio" required placeholder="Nombre del punto de venta" />
+          </label>
+          <label class="field">
+            <span>Estado <span class="req">*</span></span>
+            <input type="text" name="estado" required placeholder="Ej. Sonora" />
+          </label>
+          <label class="field">
+            <span>Municipio o alcaldía <span class="req">*</span></span>
+            <input type="text" name="municipio" required placeholder="Ej. Hermosillo" />
+          </label>
+          <label class="field">
+            <span>Ejecutivo de ventas <span class="req">*</span></span>
+            <input type="text" name="ejecutivoVentas" required placeholder="Nombre del ejecutivo" />
+          </label>
+          <label class="field">
+            <span>Coordinadora de Trade que aplica la encuesta <span class="req">*</span></span>
+            <input type="text" name="coordinadoraTrade" required placeholder="Nombre de quien aplica" />
+          </label>
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>1</span><h2>Experiencia general con YAAVS</h2></header>
-          <p class="section-note">En general, ¿qué tan satisfecho(a) estás con el apoyo que YAAVS brinda a tu negocio?</p>
-          <div class="choice-scale" id="satisfaccionGeneralBox" role="radiogroup"></div>
+          <header class="section-head"><span>1</span><h2>Experiencia con YAAVS</h2></header>
+          <p class="section-note">En general, ¿qué tan satisfecho(a) estás con el apoyo de YAAVS a tu negocio?</p>
+          <div class="nps-scale nps-scale-5" id="satisfaccionGeneralBox" role="radiogroup"></div>
+          <label class="field" style="margin-top: 0.85rem">
+            <span>¿Por qué? <span class="req">*</span></span>
+            <textarea name="satisfaccionGeneralPorque" rows="2" required placeholder="Cuéntanos brevemente"></textarea>
+          </label>
         </section>
 
         <section class="card-section">
           <header class="section-head"><span>2</span><h2>Recomendación YAAVS</h2></header>
-          <p class="section-note">
-            En una escala del 1 al 5, ¿qué tan probable es que recomiendes YAAVS a otro negocio como el tuyo?
-          </p>
+          <p class="section-note">¿Qué tan probable es que recomiendes YAAVS a otro negocio como el tuyo?</p>
           <div class="nps-scale nps-scale-5" id="npsScale" role="radiogroup" aria-label="Probabilidad de recomendar YAAVS"></div>
           <div class="nps-ends">
-            <span>1 = Nada probable</span>
+            <span>0 = Nada probable</span>
             <span>5 = Totalmente probable</span>
           </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>3</span><h2>Atención del ejecutivo de ventas</h2></header>
+          <p class="section-note">¿Qué tan satisfecho(a) estás con la atención de tu ejecutivo de ventas?</p>
+          <div class="nps-scale nps-scale-5" id="atencionBox" role="radiogroup"></div>
           <label class="field" style="margin-top: 0.85rem">
             <span>¿Por qué? <span class="req">*</span></span>
-            <textarea name="npsPorque" rows="2" required placeholder="Cuéntanos brevemente tu calificación"></textarea>
+            <textarea name="atencionPorque" rows="2" required placeholder="Cuéntanos brevemente"></textarea>
           </label>
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>3</span><h2>Productos y servicios comercializados</h2></header>
-          <p class="section-note">¿Qué otros productos o servicios comercializas más de YAAVS? (puedes marcar varios)</p>
-          <div class="check-grid" id="productosBox"></div>
-        </section>
-
-        <section class="card-section">
-          <header class="section-head"><span>4</span><h2>Carrier con mayor volumen de ventas</h2></header>
-          <p class="section-note">¿Qué carrier tiene mayor volumen de ventas en este punto de venta?</p>
-          <div class="choice-list" id="carrierVolumenBox" role="radiogroup"></div>
-          <label class="field" id="carrierVolumenOtroWrap" hidden>
-            <span>Otro (especifica) <span class="req">*</span></span>
-            <input type="text" name="carrierVolumenOtro" placeholder="Nombre del carrier" />
-          </label>
-        </section>
-
-        <section class="card-section">
-          <header class="section-head"><span>5</span><h2>Atención del ejecutivo de ventas</h2></header>
-          <p class="section-note">¿Cómo calificarías la atención y seguimiento que recibes de tu Ejecutivo de Ventas?</p>
-          <div class="choice-scale" id="atencionBox" role="radiogroup"></div>
-        </section>
-
-        <section class="card-section">
-          <header class="section-head"><span>6</span><h2>Frecuencia de visita</h2></header>
-          <p class="section-note">¿Con qué frecuencia te visita tu Ejecutivo de Ventas en el punto de venta?</p>
+          <header class="section-head"><span>4</span><h2>Frecuencia de visita</h2></header>
+          <p class="section-note">¿Con qué frecuencia te visita tu ejecutivo de ventas en este punto de venta?</p>
           <div class="choice-list" id="frecuenciaBox" role="radiogroup"></div>
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>7</span><h2>Material POP recibido</h2></header>
-          <p class="section-note">¿Qué material POP has recibido? (puedes marcar varios)</p>
-          <div class="check-grid" id="materialPopBox"></div>
-          <label class="field" id="materialPopOtroWrap" hidden>
+          <header class="section-head"><span>6</span><h2>Productos y servicios en el PDV</h2></header>
+          <p class="section-note">¿Qué productos o servicios vendes actualmente en tu punto de venta? (puedes marcar varios)</p>
+          <div class="check-grid" id="productosBox"></div>
+          <label class="field" id="productosOtroWrap" hidden>
             <span>Otro (especifica) <span class="req">*</span></span>
-            <input type="text" name="materialPopOtro" placeholder="Describe el material POP" />
+            <input type="text" name="productosOtro" placeholder="Describe el producto o servicio" />
+          </label>
+          <div id="productoMayorDemandaWrap">
+            <label class="field">
+              <span>De los que seleccionaste, ¿cuál tiene mayor demanda? <span class="req">*</span></span>
+              <select name="productoMayorDemanda" id="productoMayorDemanda">
+                <option value="">Selecciona…</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>7</span><h2>Ventas de la última semana</h2></header>
+          <p class="section-note">En la última semana completa, ¿cuántas ventas de servicios o productos de YAAVS comercializaste?</p>
+          <div id="ventasSemanaBox" class="ventas-semana-grid"></div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>8</span><h2>Compañía con mayor volumen</h2></header>
+          <p class="section-note">¿Qué compañía telefónica tiene el mayor volumen de ventas en tu PDV?</p>
+          <div class="choice-list" id="carrierVolumenBox" role="radiogroup"></div>
+          <label class="field" id="carrierVolumenOtroWrap" hidden>
+            <span>Otra (especifica) <span class="req">*</span></span>
+            <input type="text" name="carrierVolumenOtro" placeholder="Nombre de la compañía" />
           </label>
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>8</span><h2>Redes sociales</h2></header>
-          <p class="section-note">¿Nos sigues en redes sociales?</p>
-          <div class="choice-list" id="sigueRedesBox" role="radiogroup"></div>
-          <div id="redesSocialesWrap" hidden>
-            <p class="section-note" style="margin-top: 0.85rem">¿En cuáles redes? (puedes marcar varias)</p>
-            <div class="check-grid" id="redesSocialesBox"></div>
+          <header class="section-head"><span>9</span><h2>Materiales publicitarios recibidos</h2></header>
+          <p class="section-note">¿Qué materiales publicitarios has recibido de YAAVS en los últimos 3 meses? (puedes marcar varios)</p>
+          <div class="check-grid" id="materialesRecibidosBox"></div>
+          <label class="field" id="materialesRecibidosOtroWrap" hidden>
+            <span>Otro (especifica) <span class="req">*</span></span>
+            <input type="text" name="materialesRecibidosOtro" placeholder="Describe el material" />
+          </label>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>10</span><h2>Apoyos que necesitas</h2></header>
+          <p class="section-note">¿Qué apoyos de YAAVS necesitas más en tu punto de venta? (máximo 3)</p>
+          <div class="check-grid" id="apoyosNecesariosBox"></div>
+          <label class="field" id="apoyosNecesariosOtroWrap" hidden>
+            <span>Otro (especifica) <span class="req">*</span></span>
+            <input type="text" name="apoyosNecesariosOtro" placeholder="Describe el apoyo" />
+          </label>
+          <div id="apoyoMasUrgenteWrap">
+            <label class="field">
+              <span>De los apoyos que seleccionaste, ¿cuál es el más urgente? <span class="req">*</span></span>
+              <select name="apoyoMasUrgente" id="apoyoMasUrgente">
+                <option value="">Selecciona…</option>
+              </select>
+            </label>
           </div>
         </section>
 
         <section class="card-section">
-          <header class="section-head"><span>9</span><h2>Otro distribuidor</h2></header>
-          <p class="section-note">¿Trabajas con otro distribuidor?</p>
+          <header class="section-head"><span>11</span><h2>Activación o evento promocional</h2></header>
+          <p class="section-note">¿YAAVS realizó alguna activación o evento promocional en tu punto de venta en los últimos 3 meses?</p>
+          <div class="choice-list" id="activacionRealizadaBox" role="radiogroup"></div>
+          <div id="utilidadActivacionWrap" hidden>
+            <p class="section-note" style="margin-top: 0.85rem">¿Qué tan útil consideras que fue para atraer clientes?</p>
+            <div class="choice-list" id="utilidadActivacionBox" role="radiogroup"></div>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>12</span><h2>Redes sociales</h2></header>
+          <p class="section-note">¿En cuáles redes sociales sigues a YAAVS? (puedes marcar varias)</p>
+          <div class="check-grid" id="redesSocialesBox"></div>
+          <label class="field" id="redesSocialesOtroWrap" hidden>
+            <span>Otra (especifica) <span class="req">*</span></span>
+            <input type="text" name="redesSocialesOtro" placeholder="Nombre de la red" />
+          </label>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>13</span><h2>Página web de YAAVS</h2></header>
+          <p class="section-note">¿Has visitado la página web de YAAVS?</p>
+          <div class="choice-list" id="visitaWebBox" role="radiogroup"></div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>14</span><h2>Medio preferido de información</h2></header>
+          <p class="section-note">¿Por qué medio prefieres recibir información de promociones y materiales?</p>
+          <div class="choice-list" id="medioInfoBox" role="radiogroup"></div>
+          <label class="field" id="medioInfoOtroWrap" hidden>
+            <span>Otro (especifica) <span class="req">*</span></span>
+            <input type="text" name="medioInfoOtro" placeholder="Describe el medio" />
+          </label>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>15</span><h2>Otro distribuidor</h2></header>
+          <p class="section-note">Además de YAAVS, ¿trabajas actualmente con otro distribuidor?</p>
           <div class="choice-list" id="otroDistribuidorBox" role="radiogroup"></div>
           <div id="otroDistribuidorWrap" hidden>
             <label class="field">
-              <span>¿Cuál es? <span class="req">*</span></span>
+              <span>Si respondiste Sí, ¿con cuál o cuáles? (opcional)</span>
               <input type="text" name="otroDistribuidorCual" placeholder="Nombre del distribuidor" />
-            </label>
-            <label class="field">
-              <span>¿Qué beneficios te otorga? <span class="req">*</span></span>
-              <textarea name="otroDistribuidorBeneficios" rows="2" placeholder="Describe los beneficios"></textarea>
             </label>
           </div>
         </section>
 
+        <section class="card-section" id="comisionesSection" hidden>
+          <header class="section-head"><span>16</span><h2>Beneficios o comisiones de otros distribuidores</h2></header>
+          <p class="section-note">¿Qué beneficios o comisiones te ofrecen esos distribuidores? (opcional)</p>
+          <div id="comisionesBox" class="comisiones-grid"></div>
+        </section>
+
         <section class="card-section">
-          <header class="section-head"><span>10</span><h2>Comentarios y oportunidades de mejora</h2></header>
+          <header class="section-head"><span>17</span><h2>Cambio más importante</h2></header>
           <label class="field">
-            <span>¿Qué podríamos mejorar? <span class="req">*</span></span>
-            <textarea
-              name="comentarios"
-              rows="4"
-              required
-              placeholder="Trade Marketing, atención de tu Ejecutivo de Ventas o material POP… (si no hay, escribe Ninguna)"
-            ></textarea>
+            <span>¿Cuál es el cambio más importante que YAAVS podría hacer para apoyar mejor a tu negocio? <span class="req">*</span></span>
+            <textarea name="cambioImportante" rows="3" required placeholder="Describe el cambio más importante"></textarea>
+          </label>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>A1</span><h2>Características del punto de venta</h2></header>
+          <p class="section-note">Formato del punto de venta. Marca una opción.</p>
+          <div class="choice-list" id="formatoPdvBox" role="radiogroup"></div>
+          <label class="field" id="formatoPdvOtroWrap" hidden>
+            <span>Otro (especifica) <span class="req">*</span></span>
+            <input type="text" name="formatoPdvOtro" placeholder="Describe el formato" />
+          </label>
+          <p class="section-note" style="margin-top: 0.85rem">Entorno. Marca el que mejor describa la ubicación.</p>
+          <div class="choice-list" id="entornoPdvBox" role="radiogroup"></div>
+          <label class="field" id="entornoPdvOtroWrap" hidden>
+            <span>Otro (especifica) <span class="req">*</span></span>
+            <input type="text" name="entornoPdvOtro" placeholder="Describe el entorno" />
+          </label>
+          <div id="ubicacionCalleWrap">
+            <p class="section-note" style="margin-top: 0.85rem">Ubicación en la calle, si aplica.</p>
+            <div class="choice-list" id="ubicacionCalleBox" role="radiogroup"></div>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <header class="section-head"><span>A2</span><h2>Materiales actualmente exhibidos</h2></header>
+          <p class="section-note">Materiales publicitarios de YAAVS actualmente exhibidos (puedes marcar varios)</p>
+          <div class="check-grid" id="materialesExhibidosBox"></div>
+          <label class="field" id="materialesExhibidosOtroWrap" hidden>
+            <span>Otro (especifica) <span class="req">*</span></span>
+            <input type="text" name="materialesExhibidosOtro" placeholder="Describe el material" />
+          </label>
+        </section>
+
+        <div id="observacionMaterialesWrap">
+          <section class="card-section">
+            <header class="section-head"><span>A3</span><h2>Estado físico de los materiales</h2></header>
+            <div class="choice-list" id="estadoMaterialesBox" role="radiogroup"></div>
+            <label class="field" id="estadoMaterialesDetalleWrap" hidden>
+              <span>Material afectado y detalle <span class="req">*</span></span>
+              <input type="text" name="estadoMaterialesDetalle" placeholder="Describe el material afectado" />
+            </label>
+          </section>
+
+          <section class="card-section">
+            <header class="section-head"><span>A4</span><h2>Visibilidad de mensajes y promociones</h2></header>
+            <div class="choice-list" id="visibilidadMensajesBox" role="radiogroup"></div>
+            <label class="field" id="visibilidadDetalleWrap" hidden>
+              <span>Material que requiere reubicación o ajuste</span>
+              <input type="text" name="visibilidadDetalle" placeholder="Opcional" />
+            </label>
+          </section>
+
+          <section class="card-section">
+            <header class="section-head"><span>A5</span><h2>Vigencia de las promociones</h2></header>
+            <div class="choice-list" id="vigenciaPromocionesBox" role="radiogroup"></div>
+            <label class="field" id="vigenciaDetalleWrap" hidden>
+              <span>Material o promoción por actualizar</span>
+              <input type="text" name="vigenciaDetalle" placeholder="Opcional" />
+            </label>
+          </section>
+        </div>
+
+        <section class="card-section">
+          <header class="section-head"><span>A6</span><h2>Evidencia y seguimiento</h2></header>
+          <label class="field">
+            <span>Notas de evidencia fotográfica o acción de seguimiento (opcional)</span>
+            <textarea name="evidenciaSeguimiento" rows="2" placeholder="Ej. Se tomó foto de fachada / se programó reposición de lona"></textarea>
           </label>
         </section>
 
@@ -160,7 +313,7 @@
 
       <section class="success-panel" id="successPanel" hidden>
         <h2>¡Gracias por compartir tu experiencia!</h2>
-        <p>Tus respuestas nos ayudan a mejorar la atención, el material POP y el Trade Marketing en el punto de venta.</p>
+        <p>Tus respuestas nos ayudan a mejorar la atención, los materiales y el Trade Marketing en el punto de venta.</p>
         <div class="success-actions">
           <button type="button" class="btn-primary" id="anotherBtn">Enviar otra</button>
         </div>
@@ -168,7 +321,7 @@
     </main>
 
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-    <script src="/trade/config.js?v=20260827t6"></script>
-    <script src="/trade/app.js?v=20260827t6" defer></script>
+    <script src="/trade/config.js?v=20260921t1"></script>
+    <script src="/trade/app.js?v=20260921t1" defer></script>
   </body>
 </html>

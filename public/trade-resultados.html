@@ -12,8 +12,8 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/resultados.css?v=20260827t6" />
-    <link rel="stylesheet" href="/trade/trade-resultados.css?v=20260827t6" />
+    <link rel="stylesheet" href="/resultados.css?v=20260921t1" />
+    <link rel="stylesheet" href="/trade/trade-resultados.css?v=20260921t1" />
   </head>
   <body>
     <div class="atmosphere" aria-hidden="true">
@@ -61,7 +61,36 @@
             <canvas id="chartProd" height="220"></canvas>
             <p class="chart-empty" id="emptyProd" hidden>Sin datos aún</p>
           </article>
+          <article class="chart-card">
+            <h3>Redes sociales</h3>
+            <canvas id="chartRedes" height="220"></canvas>
+            <p class="chart-empty" id="emptyRedes" hidden>Sin datos aún</p>
+          </article>
+          <article class="chart-card">
+            <h3>Otro carrier (volumen)</h3>
+            <canvas id="chartCarrierOtro" height="220"></canvas>
+            <p class="chart-empty" id="emptyCarrierOtro" hidden>Sin datos aún</p>
+          </article>
         </div>
+      </section>
+
+      <section class="charts" aria-label="Otro distribuidor">
+        <article class="chart-card distribuidor-card">
+          <h3>Otro distribuidor · detalle</h3>
+          <div class="inventory-table-wrap">
+            <table class="inventory-table" id="distribuidorTable">
+              <thead>
+                <tr>
+                  <th>Clave YAAVSER</th>
+                  <th>Distribuidor</th>
+                  <th>Beneficios</th>
+                </tr>
+              </thead>
+              <tbody id="distribuidorBody"></tbody>
+            </table>
+          </div>
+          <p class="chart-empty" id="distribuidorEmpty" hidden>Sin datos aún</p>
+        </article>
       </section>
 
       <section class="filters">
@@ -100,7 +129,7 @@
     </dialog>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-    <script src="/trade/config.js?v=20260827t6"></script>
-    <script src="/trade/resultados.js?v=20260827t6" defer></script>
+    <script src="/trade/config.js?v=20260921t1"></script>
+    <script src="/trade/resultados.js?v=20260921t1" defer></script>
   </body>
 </html>
