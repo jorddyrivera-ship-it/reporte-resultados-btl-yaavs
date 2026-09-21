@@ -16,7 +16,18 @@
 
   let items = [];
   let lastSync = null;
-  const charts = { nps: null, sat: null, prod: null, redes: null, carrierOtro: null };
+  const charts = {
+    nps: null,
+    sat: null,
+    atencion: null,
+    freq: null,
+    prod: null,
+    carrier: null,
+    mat: null,
+    apoyos: null,
+    redes: null,
+    formato: null,
+  };
 
   const LABELS = {
     fechaEncuesta: "Fecha encuesta",
@@ -316,6 +327,28 @@
     });
   }
 
+  function formatComisiones(val) {
+    if (!val) return "—";
+    let obj = val;
+    if (typeof val === "string") {
+      try {
+        obj = JSON.parse(val);
+      } catch (_) {
+        return val;
+      }
+    }
+    if (!obj || typeof obj !== "object") return "—";
+    const parts = Object.entries(obj)
+      .map(([k, v]) => {
+        const monto = v?.monto || "";
+        const cond = v?.condicion || "";
+        if (!monto && !cond) return "";
+        return `${k}: ${[monto, cond].filter(Boolean).join(" / ")}`;
+      })
+      .filter(Boolean);
+    return parts.length ? parts.join(" · ") : "—";
+  }
+
   function renderCharts(list) {
     const npsMap = new Map();
     list.forEach((r) => {
@@ -326,21 +359,32 @@
     const npsLabels = [...npsMap.keys()].sort((a, b) => Number(a) - Number(b));
     const npsValues = npsLabels.map((k) => npsMap.get(k));
     const sat = tallyValues(list, "satisfaccionGeneral");
+    const atencion = tallyValues(list, "atencionEjecutivo");
+    const freq = tallyValues(list, "frecuenciaVisita");
     const prod = tallyValues(list, "productos");
+    const carrier = tallyValues(list, "carrierVolumen");
+    const mat = tallyValues(list, "materialesRecibidos");
+    const apoyos = tallyValues(list, "apoyosNecesarios");
     const redes = tallyValues(list, "redesSociales");
-    const carrierOtro = tallyValues(list, "carrierVolumenOtro");
+    const formato = tallyValues(list, "formatoPdv");
+
     upsertPie("nps", "chartNps", "emptyNps", npsLabels, npsValues);
     upsertPie("sat", "chartSat", "emptySat", sat.labels, sat.values);
+    upsertPie("atencion", "chartAtencion", "emptyAtencion", atencion.labels, atencion.values);
+    upsertBar("freq", "chartFreq", "emptyFreq", freq.labels, freq.values);
     upsertPie("prod", "chartProd", "emptyProd", prod.labels.slice(0, 8), prod.values.slice(0, 8));
+    upsertPie("carrier", "chartCarrier", "emptyCarrier", carrier.labels, carrier.values);
+    upsertBar("mat", "chartMat", "emptyMat", mat.labels.slice(0, 8), mat.values.slice(0, 8));
+    upsertBar("apoyos", "chartApoyos", "emptyApoyos", apoyos.labels.slice(0, 8), apoyos.values.slice(0, 8));
     upsertBar("redes", "chartRedes", "emptyRedes", redes.labels, redes.values);
-    upsertBar("carrierOtro", "chartCarrierOtro", "emptyCarrierOtro", carrierOtro.labels, carrierOtro.values);
+    upsertPie("formato", "chartFormato", "emptyFormato", formato.labels, formato.values);
   }
 
   function renderDistribuidorTable(list) {
     const tbody = document.getElementById("distribuidorBody");
     const empty = document.getElementById("distribuidorEmpty");
     if (!tbody) return;
-    const rows = list.filter((r) => String(r.otroDistribuidor || "").trim() === "S\u00ed");
+    const rows = list.filter((r) => String(r.otroDistribuidor || "").trim() === "Sí");
     if (!rows.length) {
       tbody.innerHTML = "";
       if (empty) empty.hidden = false;
@@ -350,9 +394,10 @@
     tbody.innerHTML = rows
       .map(
         (r) => `<tr>
-          <td>${escapeHtml(r.claveYaavser || "\u2014")}</td>
-          <td>${escapeHtml(r.otroDistribuidorCual || "\u2014")}</td>
-          <td>${escapeHtml(r.otroDistribuidorBeneficios || "\u2014")}</td>
+          <td>${escapeHtml(r.claveYaavser || "—")}</td>
+          <td>${escapeHtml(r.nombreNegocio || "—")}</td>
+          <td>${escapeHtml(r.otroDistribuidorCual || "—")}</td>
+          <td>${escapeHtml(formatComisiones(r.comisiones || r.otroDistribuidorBeneficios))}</td>
         </tr>`,
       )
       .join("");
@@ -386,12 +431,24 @@
     if (!r) return;
     modalHero.innerHTML = `
       <h2>${escapeHtml(r.claveYaavser || "Sin clave")}</h2>
-      <p>${formatDate(r.receivedAt || r.timestamp)} · Recomendación ${escapeHtml(r.nps ?? "—")}</p>
+      <p>${escapeHtml(r.nombreNegocio || "—")} · ${formatDate(r.receivedAt || r.timestamp)} · Rec. ${escapeHtml(r.nps ?? "—")}</p>
     `;
     modalBody.innerHTML = Object.keys(LABELS)
       .map((key) => {
         let val = r[key];
-        if (Array.isArray(val)) val = val.join(", ");
+        if (key === "comisiones") val = formatComisiones(val);
+        else if (key === "ventasSemana" && val) {
+          try {
+            const obj = typeof val === "string" ? JSON.parse(val) : val;
+            if (obj && typeof obj === "object" && !Array.isArray(obj)) {
+              val = Object.entries(obj)
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(" · ");
+            }
+          } catch (_) {
+            /* keep raw */
+          }
+        } else if (Array.isArray(val)) val = val.join(", ");
         else if (val && typeof val === "object") {
           try {
             val = JSON.stringify(val);
@@ -399,7 +456,7 @@
             val = String(val);
           }
         }
-        if (val == null || String(val).trim() === "" || String(val) === "{}") return "";
+        if (val == null || String(val).trim() === "" || String(val) === "{}" || String(val) === "—") return "";
         return `<div class="modal-row"><b>${LABELS[key]}</b><span>${escapeHtml(val)}</span></div>`;
       })
       .join("");

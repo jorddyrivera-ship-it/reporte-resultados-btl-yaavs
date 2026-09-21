@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#eef4fa" />
-    <title>Resultados · Encuesta Trade Marketing YAAVS</title>
+    <title>Resultados · Encuesta Trade Marketing YAAVS 2.3</title>
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,8 +12,8 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/resultados.css?v=20260921t1" />
-    <link rel="stylesheet" href="/trade/trade-resultados.css?v=20260921t1" />
+    <link rel="stylesheet" href="/resultados.css?v=20260921t2" />
+    <link rel="stylesheet" href="/trade/trade-resultados.css?v=20260921t2" />
   </head>
   <body>
     <div class="atmosphere" aria-hidden="true">
@@ -34,10 +34,10 @@
 
     <main class="wrap">
       <section class="hero-panel">
-        <p class="eyebrow">Tablero en vivo</p>
+        <p class="eyebrow">Tablero en vivo · Trade 2.3</p>
         <h1>Encuesta Trade Marketing · PDV</h1>
         <p class="lede">
-          Respuestas de puntos de venta sobre recomendación, POP, ejecutivo de ventas y Trade Marketing.
+          Resultados de experiencia YAAVS, productos, materiales, apoyos, redes y revisión del punto de venta.
         </p>
         <p class="live-line">En vivo: <strong id="liveCount">0</strong> respuestas</p>
       </section>
@@ -47,7 +47,7 @@
       <section class="charts" aria-label="Gráficas">
         <div class="charts-grid trade-charts">
           <article class="chart-card">
-            <h3>NPS (recomendación)</h3>
+            <h3>Recomendación (0–5)</h3>
             <canvas id="chartNps" height="220"></canvas>
             <p class="chart-empty" id="emptyNps" hidden>Sin datos aún</p>
           </article>
@@ -57,9 +57,34 @@
             <p class="chart-empty" id="emptySat" hidden>Sin datos aún</p>
           </article>
           <article class="chart-card">
+            <h3>Atención del ejecutivo</h3>
+            <canvas id="chartAtencion" height="220"></canvas>
+            <p class="chart-empty" id="emptyAtencion" hidden>Sin datos aún</p>
+          </article>
+          <article class="chart-card">
+            <h3>Frecuencia de visita</h3>
+            <canvas id="chartFreq" height="220"></canvas>
+            <p class="chart-empty" id="emptyFreq" hidden>Sin datos aún</p>
+          </article>
+          <article class="chart-card">
             <h3>Productos comercializados</h3>
             <canvas id="chartProd" height="220"></canvas>
             <p class="chart-empty" id="emptyProd" hidden>Sin datos aún</p>
+          </article>
+          <article class="chart-card">
+            <h3>Compañía mayor volumen</h3>
+            <canvas id="chartCarrier" height="220"></canvas>
+            <p class="chart-empty" id="emptyCarrier" hidden>Sin datos aún</p>
+          </article>
+          <article class="chart-card">
+            <h3>Materiales recibidos</h3>
+            <canvas id="chartMat" height="220"></canvas>
+            <p class="chart-empty" id="emptyMat" hidden>Sin datos aún</p>
+          </article>
+          <article class="chart-card">
+            <h3>Apoyos necesarios</h3>
+            <canvas id="chartApoyos" height="220"></canvas>
+            <p class="chart-empty" id="emptyApoyos" hidden>Sin datos aún</p>
           </article>
           <article class="chart-card">
             <h3>Redes sociales</h3>
@@ -67,9 +92,9 @@
             <p class="chart-empty" id="emptyRedes" hidden>Sin datos aún</p>
           </article>
           <article class="chart-card">
-            <h3>Otro carrier (volumen)</h3>
-            <canvas id="chartCarrierOtro" height="220"></canvas>
-            <p class="chart-empty" id="emptyCarrierOtro" hidden>Sin datos aún</p>
+            <h3>Formato del PDV</h3>
+            <canvas id="chartFormato" height="220"></canvas>
+            <p class="chart-empty" id="emptyFormato" hidden>Sin datos aún</p>
           </article>
         </div>
       </section>
@@ -81,9 +106,10 @@
             <table class="inventory-table" id="distribuidorTable">
               <thead>
                 <tr>
-                  <th>Clave YAAVSER</th>
+                  <th>Clave</th>
+                  <th>Negocio</th>
                   <th>Distribuidor</th>
-                  <th>Beneficios</th>
+                  <th>Comisiones</th>
                 </tr>
               </thead>
               <tbody id="distribuidorBody"></tbody>
@@ -96,7 +122,7 @@
       <section class="filters">
         <label>
           Buscar
-          <input type="search" id="q" placeholder="Clave, comentario…" />
+          <input type="search" id="q" placeholder="Clave, negocio, municipio…" />
         </label>
         <label>
           Desde
@@ -116,7 +142,7 @@
         <ul class="board board-grid" id="board"></ul>
         <div class="empty" id="empty" hidden>
           <h2>Sin respuestas aún</h2>
-          <p>Cuando alguien conteste la encuesta Trade, aparecerá aquí.</p>
+          <p>Cuando alguien conteste la encuesta Trade 2.3, aparecerá aquí.</p>
         </div>
       </section>
     </main>
@@ -129,7 +155,7 @@
     </dialog>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-    <script src="/trade/config.js?v=20260921t1"></script>
-    <script src="/trade/resultados.js?v=20260921t1" defer></script>
+    <script src="/trade/config.js?v=20260921t2"></script>
+    <script src="/trade/resultados.js?v=20260921t2" defer></script>
   </body>
 </html>
