@@ -39,7 +39,7 @@ jobs:
       - name: Backup live responses
         run: |
           DOMAIN="lawngreen-guanaco-656732.hostingersite.com"
-          curl -fsS --connect-timeout 10 --max-time 25 "https://${DOMAIN}/api/responses" -o responses-live.json \
+          curl -fsS --connect-timeout 10 --max-time 25 "https://${DOMAIN}/api/responses?includeTrash=1" -o responses-live.json \
             || echo '{"responses":[]}' > responses-live.json
           python3 -c "import json; d=json.load(open('responses-live.json')); print('backed up', len(d.get('responses') or d.get('items') or []))"
 
@@ -78,7 +78,11 @@ jobs:
                 return await fn();
               } catch (e) {
                 last = e;
-                const detail = e.response?.data || e.message;
+                const raw = e.response?.data || e.message;
+                const detail =
+                  typeof raw === "string"
+                    ? raw.slice(0, 240)
+                    : JSON.stringify(raw).slice(0, 240);
                 console.error(`${label} attempt ${i + 1} failed:`, e.response?.status || '', detail);
                 await sleep(2000 * (i + 1));
               }
@@ -228,16 +232,19 @@ jobs:
 
             let build;
             try {
-              build = await withRetry(deployFromArchive, 'from-archive', 3);
-              console.log('from-archive ok', JSON.stringify(build).slice(0, 800));
-            } catch (e) {
-              console.error('from-archive path failed, trying TUS');
+              console.log('using TUS upload path');
               build = await withRetry(uploadViaTus, 'tus', 4);
+            } catch (e) {
+              console.error('TUS path failed, trying from-archive once');
+              build = await withRetry(deployFromArchive, 'from-archive', 1);
             }
 
             await poll(build?.uuid || build?.data?.uuid);
           })().catch((e) => {
-            console.error('DEPLOY_FAILED', e.response?.status, e.response?.data || e.message);
+            const raw = e.response?.data || e.message;
+            const detail =
+              typeof raw === "string" ? raw.slice(0, 400) : JSON.stringify(raw).slice(0, 400);
+            console.error('DEPLOY_FAILED', e.response?.status, detail);
             process.exit(1);
           });
           NODE
@@ -274,7 +281,8 @@ jobs:
                       "id": r.get("id"),
                       "receivedAt": r.get("receivedAt"),
                       "timestamp": r.get("timestamp"),
-                      "answers": {k: v for k, v in r.items() if k not in ("id", "receivedAt", "timestamp")},
+                      "deletedAt": r.get("deletedAt") or None,
+                      "answers": {k: v for k, v in r.items() if k not in ("id", "receivedAt", "timestamp", "deletedAt")},
                   }
                   for r in items
               ],
